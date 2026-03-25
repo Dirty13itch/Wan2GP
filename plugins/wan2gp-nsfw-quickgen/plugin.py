@@ -32,7 +32,7 @@ PlugIn_Name = "Quick Gen"
 PlugIn_Id = "QuickGen"
 PLUGIN_DIR = os.path.dirname(os.path.abspath(__file__))
 PRESETS_DIR = os.path.join(PLUGIN_DIR, "..", "..", "profiles", "wan_2_2")
-LORA_DIR = os.path.join(PLUGIN_DIR, "..", "..", "models", "loras")
+LORA_DIR = os.path.join(PLUGIN_DIR, "..", "..", "loras", "wan")
 OUTPUT_DIR = os.path.join(PLUGIN_DIR, "..", "..", "outputs")
 FAVORITES_DIR = os.path.join(OUTPUT_DIR, "favorites")
 CHARACTERS_DIR = os.path.join(PLUGIN_DIR, "characters")
@@ -80,11 +80,38 @@ def _load_type_defaults() -> dict:
     return _load_json(os.path.join(PLUGIN_DIR, "type_defaults.json")) or {}
 
 def _load_preset(scene_name: str) -> Optional[dict]:
+    """Load and validate a scene preset JSON. Returns None on any error."""
     filename = SCENE_PRESETS.get(scene_name)
     if not filename:
         return None
     path = os.path.join(PRESETS_DIR, filename)
-    return _load_json(path)
+    data = _load_json(path)
+    if not data:
+        return None
+    # Validate required fields
+    loras = data.get("activated_loras", [])
+    weights = data.get("loras_multipliers", "")
+    if not isinstance(loras, list):
+        print(f"[QuickGen] WARNING: preset '{filename}' has invalid activated_loras (not a list)")
+        data["activated_loras"] = []
+    if isinstance(weights, str):
+        weight_count = len(weights.split()) if weights.strip() else 0
+        lora_count = len(data.get("activated_loras", []))
+        if weight_count != lora_count and lora_count > 0:
+            print(f"[QuickGen] WARNING: preset '{filename}' weight/LoRA mismatch ({weight_count} weights, {lora_count} LoRAs). Padding/trimming.")
+            w = weights.split() if weights.strip() else []
+            while len(w) < lora_count:
+                w.append("0.7")
+            data["loras_multipliers"] = " ".join(w[:lora_count])
+    # Validate LoRA files exist on disk
+    lora_dir = os.path.normpath(os.path.join(PLUGIN_DIR, "..", "..", "loras", "wan"))
+    missing = []
+    for lora in data.get("activated_loras", []):
+        if not os.path.exists(os.path.join(lora_dir, lora)):
+            missing.append(lora)
+    if missing:
+        print(f"[QuickGen] WARNING: preset '{filename}' has {len(missing)} missing LoRA(s): {', '.join(missing)}")
+    return data
 
 def _load_user_type_settings() -> dict:
     data = _load_json(TYPE_SETTINGS_PATH)
@@ -169,9 +196,12 @@ def _save_generation_meta(video_path: str, meta: dict):
 
 def _get_vram_info() -> Tuple[float, float]:
     if HAS_TORCH and torch.cuda.is_available():
-        alloc = torch.cuda.memory_allocated() / (1024**3)
-        total = torch.cuda.get_device_properties(0).total_memory / (1024**3)
-        return round(alloc, 1), round(total, 1)
+        try:
+            alloc = torch.cuda.memory_allocated() / (1024**3)
+            total = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+            return round(alloc, 1), round(total, 1)
+        except Exception:
+            pass
     return 0.0, 0.0
 
 def _get_gpu_temp() -> int:
@@ -232,7 +262,19 @@ def build_prompt(
     intensity: str,
     continuation_depth: int = 0,
 ) -> Tuple[str, str]:
-    """Build the full positive and negative prompt from all layers."""
+    """Build the full positive and negative prompt from all layers.
+
+    Defensive: all dict accesses use .get() with fallbacks.
+    If scene_meta or type_defaults are None/empty, returns minimal prompt.
+    """
+    if not scene_meta:
+        scene_meta = {}
+    if not type_defaults:
+        type_defaults = {}
+    if not user_type:
+        user_type = {}
+    if not modifiers:
+        modifiers = []
     meta = scene_meta.get(scene_name, {})
     parts = []
 
@@ -828,6 +870,27 @@ class QuickGenPlugin(WAN2GPPlugin):
             # GENERATE
             # ============================================================
             def apply_and_generate(
+                state_dict, scene, fidelity, intensity, quality, duration_frames, aspect,
+                camera, mods, skin, hair_c, makeup, aes, gaze, hair, env, light, color,
+                shine, male, body_emp, face_lk, face_str, prompt_text, neg_text,
+                enhance_on, audio_on, grain_on, dof_val, seed_val, lock_s, cont_depth, image_path,
+            ):
+                no_change = (time.time(), gr.Tabs(), gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), gr.update())
+
+                try:
+                    return _apply_and_generate_inner(
+                        state_dict, scene, fidelity, intensity, quality, duration_frames, aspect,
+                        camera, mods, skin, hair_c, makeup, aes, gaze, hair, env, light, color,
+                        shine, male, body_emp, face_lk, face_str, prompt_text, neg_text,
+                        enhance_on, audio_on, grain_on, dof_val, seed_val, lock_s, cont_depth, image_path,
+                    )
+                except Exception as e:
+                    import traceback
+                    traceback.print_exc()
+                    gr.Warning(f"Generation failed: {str(e)[:200]}")
+                    return no_change
+
+            def _apply_and_generate_inner(
                 state_dict, scene, fidelity, intensity, quality, duration_frames, aspect,
                 camera, mods, skin, hair_c, makeup, aes, gaze, hair, env, light, color,
                 shine, male, body_emp, face_lk, face_str, prompt_text, neg_text,
