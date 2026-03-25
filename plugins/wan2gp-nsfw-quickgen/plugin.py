@@ -53,6 +53,9 @@ SCENE_PRESETS = {
     "Standing / Hair Pull": "Standing Fuck Hair Pull - 4 Steps.json",
     "Titfuck / Paizuri": "Titfuck Paizuri - 4 Steps.json",
     "Body Showcase (Camera Sweep)": "Body Showcase Sweep - 4 Steps.json",
+    "Full Nelson": "Full Nelson - 4 Steps.json",
+    "Breast Insertion / Titfuck": "Breast Insertion Titfuck - 4 Steps.json",
+    "Rough Doggy (Slider LoRA)": "Rough Doggy Slider - 4 Steps.json",
 }
 
 # ---------------------------------------------------------------------------
