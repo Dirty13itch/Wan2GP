@@ -152,10 +152,8 @@ for f in sorted(os.listdir(LORA_DIR)):
         path = os.path.join(LORA_DIR, f)
         size = os.path.getsize(path)
         actual_loras[f] = size
-        if size < 1000:
-            test_fail(f'{f}: {size} bytes (STUB/FAILED DOWNLOAD)')
-        elif size < 50_000_000:
-            test_pass(f'{f}: {size/1024/1024:.1f} MB')
+        if size < 10_000_000:  # <10MB is definitely wrong for a WAN 2.2 LoRA
+            test_fail(f'{f}: {size/1024/1024:.1f} MB (too small — likely stub or failed download)')
         else:
             test_pass(f'{f}: {size/1024/1024:.1f} MB')
 
@@ -388,7 +386,6 @@ for f in sorted(os.listdir(LORA_DIR)):
 # SUMMARY
 # =====================================================================
 print('\n' + '=' * 70)
-total_tests = len(errors) + len(warnings) + sum(1 for line in [] if '[PASS]' in line)
 print(f'RESULTS: {len(errors)} ERRORS, {len(warnings)} WARNINGS')
 print('=' * 70)
 if errors:

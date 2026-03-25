@@ -74,9 +74,14 @@ def _load_json(path: str) -> Optional[dict]:
         return None
 
 def _save_json(path: str, data: dict):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    # Atomic write: write to temp then rename (prevents corruption on crash)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
+    os.replace(tmp, path)
 
 def _load_scene_meta() -> dict:
     return _load_json(os.path.join(PLUGIN_DIR, "scene_meta.json")) or {}
@@ -174,15 +179,25 @@ def _list_characters() -> List[str]:
             chars.append(f.replace(".json", ""))
     return chars
 
+def _sanitize_char_name(name: str) -> str:
+    """Sanitize character name to prevent path traversal."""
+    safe = os.path.basename(name.replace("/", "_").replace("\\", "_").replace("..", "_"))
+    return safe.strip() or "unnamed"
+
 def _load_character(name: str) -> Optional[dict]:
-    return _load_json(os.path.join(CHARACTERS_DIR, f"{name}.json"))
+    safe = _sanitize_char_name(name)
+    return _load_json(os.path.join(CHARACTERS_DIR, f"{safe}.json"))
 
 def _save_character(name: str, data: dict):
-    _save_json(os.path.join(CHARACTERS_DIR, f"{name}.json"), data)
+    safe = _sanitize_char_name(name)
+    path = os.path.join(CHARACTERS_DIR, f"{safe}.json")
+    assert os.path.abspath(path).startswith(os.path.abspath(CHARACTERS_DIR)), "Path traversal blocked"
+    _save_json(path, data)
 
 def _delete_character(name: str):
-    path = os.path.join(CHARACTERS_DIR, f"{name}.json")
-    if os.path.exists(path):
+    safe = _sanitize_char_name(name)
+    path = os.path.join(CHARACTERS_DIR, f"{safe}.json")
+    if os.path.abspath(path).startswith(os.path.abspath(CHARACTERS_DIR)) and os.path.exists(path):
         os.remove(path)
 
 # ---------------------------------------------------------------------------
@@ -420,6 +435,8 @@ def _estimate_time(steps: int, frames: int, width: int, height: int) -> str:
 # ---------------------------------------------------------------------------
 
 def _scale_lora_weights(weights_str: str, multiplier: float, cap: float = 1.5) -> str:
+    if not weights_str or not isinstance(weights_str, str):
+        return ""
     weights = weights_str.split()
     scaled = []
     for w in weights:
@@ -524,7 +541,7 @@ class QuickGenPlugin(WAN2GPPlugin):
         self._session_videos: List[dict] = []
         self._last_settings: dict = {}
         self._last_seed: Optional[int] = None
-        self._continuation_depth: int = 0
+        self._lock = threading.Lock()  # Protects _analytics, _last_settings, _last_seed
 
     # -------------------------------------------------------------------
     # Plugin API
@@ -894,12 +911,12 @@ class QuickGenPlugin(WAN2GPPlugin):
                 preset = _load_preset(scene)
                 n_loras = len(preset.get("activated_loras", [])) if preset else 0
                 s = seed_val if lock_s and seed_val else None
-                return _build_summary(scene, aspect, quality, steps, frames, ar["width"], ar["height"], n_loras, fidelity, intensity, s, mods)
+                return _build_summary(scene, aspect, quality, steps, frames, ar.get("width", 480), ar.get("height", 848), n_loras, fidelity, intensity, s, mods)
 
             for trigger in [scene_dropdown, aspect_radio, quality_radio, fidelity_slider, intensity_radio, duration_slider, modifier_check]:
                 trigger.change(
                     fn=build_summary_fn,
-                    inputs=[scene_dropdown, aspect_radio, quality_radio, fidelity_slider, intensity_radio, duration_slider, current_seed, modifier_check, lock_seed],
+                    inputs=[scene_dropdown, aspect_radio, quality_radio, fidelity_slider, intensity_radio, duration_slider, current_seed, modifier_check, lock_seed_cb],
                     outputs=[summary_md],
                 )
 
@@ -1008,8 +1025,8 @@ class QuickGenPlugin(WAN2GPPlugin):
 
                 # Resolution
                 ar = type_defaults.get("aspect_ratios", {}).get(aspect, {"width": 480, "height": 848})
-                settings["width"] = ar["width"]
-                settings["height"] = ar["height"]
+                settings["width"] = ar.get("width", 480)
+                settings["height"] = ar.get("height", 848)
 
                 # Duration
                 settings["num_frames"] = int(duration_frames)
@@ -1032,22 +1049,14 @@ class QuickGenPlugin(WAN2GPPlugin):
                     # Standard I2V mode
                     settings["image_prompt_type"] = "S"
 
-                # Prompt
+                # Prompt — build once, allow per-field override
                 user_t = {"skin_tone": skin, "hair_color": hair_c, "makeup_style": makeup, "aesthetic": aes}
-                if prompt_text.strip():
-                    pos = prompt_text
-                else:
-                    pos, _ = build_prompt(
-                        scene, scene_meta, type_defaults, user_t,
-                        mods, camera, gaze, hair, env, light, color, shine, male, intensity, cont_depth,
-                    )
-                if neg_text.strip():
-                    neg = neg_text
-                else:
-                    _, neg = build_prompt(
-                        scene, scene_meta, type_defaults, user_t,
-                        mods, camera, gaze, hair, env, light, color, shine, male, intensity, cont_depth,
-                    )
+                pos_auto, neg_auto = build_prompt(
+                    scene, scene_meta, type_defaults, user_t,
+                    mods, camera, gaze, hair, env, light, color, shine, male, intensity, cont_depth,
+                )
+                pos = prompt_text.strip() or pos_auto
+                neg = neg_text.strip() or neg_auto
 
                 # --- DoF injection ---
                 if dof_val and float(dof_val) > 0.3:
@@ -1090,16 +1099,15 @@ class QuickGenPlugin(WAN2GPPlugin):
                 elif quality != "draft":
                     settings["rife_passes"] = "rife2"
 
-                # Save last seed
-                self._last_seed = settings["seed"]
-                self._last_settings = {
-                    "scene": scene, "fidelity": fidelity, "intensity": intensity,
-                    "quality": quality, "duration": duration_frames, "aspect": aspect,
-                    "camera": camera, "modifiers": mods, "seed": settings["seed"],
-                }
-
-                # Record analytics
-                _record_generation(self._analytics, scene, settings["seed"], False, 0)
+                # Save last seed + settings (thread-safe)
+                with self._lock:
+                    self._last_seed = settings["seed"]
+                    self._last_settings = {
+                        "scene": scene, "fidelity": fidelity, "intensity": intensity,
+                        "quality": quality, "duration": duration_frames, "aspect": aspect,
+                        "camera": camera, "modifiers": mods, "seed": settings["seed"],
+                    }
+                    _record_generation(self._analytics, scene, settings["seed"], False, 0)
 
                 # Debug: log applied settings
                 print(f"[QuickGen] === Generation Settings ===")
@@ -1175,11 +1183,15 @@ class QuickGenPlugin(WAN2GPPlugin):
 
             # --- Star / Favorite ---
             def star_current(seed_val):
+                if seed_val is None:
+                    gr.Warning("No generation yet to star.")
+                    return gr.update()
                 os.makedirs(FAVORITES_DIR, exist_ok=True)
-                gr.Info(f"Starred! Seed {int(seed_val)} saved to favorites.")
-                self._analytics = _load_analytics()
-                scene = self._last_settings.get("scene", "unknown")
-                _record_generation(self._analytics, scene, int(seed_val), True, 0)
+                seed_int = int(seed_val)
+                gr.Info(f"Starred! Seed {seed_int} saved to favorites.")
+                with self._lock:
+                    scene = self._last_settings.get("scene", "unknown")
+                    _record_generation(self._analytics, scene, seed_int, True, 0)
                 return gr.update()
 
             star_btn.click(fn=star_current, inputs=[current_seed], outputs=[status_html])
@@ -1265,7 +1277,7 @@ class QuickGenPlugin(WAN2GPPlugin):
             def do_char_save(name, skin, hair_c, makeup, aes, fidelity):
                 if not name.strip():
                     gr.Warning("Enter a character name")
-                    return gr.update(), gr.update()
+                    return gr.update(), gr.update(), gr.update()
                 data = {
                     "name": name.strip(),
                     "type_settings": {
