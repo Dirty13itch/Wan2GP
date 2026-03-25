@@ -355,6 +355,33 @@ for scene_name in mod.SCENE_PRESETS:
         test_fail(f'_load_preset("{scene_name}") returned None or invalid')
 
 # =====================================================================
+# TEST 14: Safetensors header validation (catch corrupt/ZIP files)
+# =====================================================================
+print('\n[TEST 14] Safetensors binary header validation')
+import struct as _struct
+for f in sorted(os.listdir(LORA_DIR)):
+    if not f.endswith('.safetensors'):
+        continue
+    path = os.path.join(LORA_DIR, f)
+    size = os.path.getsize(path)
+    with open(path, 'rb') as fh:
+        raw = fh.read(8)
+        if len(raw) < 8:
+            test_fail(f'{f}: file too small ({size} bytes)')
+            continue
+        header_size = _struct.unpack('<Q', raw[:8])[0]
+        if header_size > 50_000_000 or header_size < 10:
+            # Check if it's a ZIP (PK header)
+            fh.seek(0)
+            magic = fh.read(2)
+            if magic == b'PK':
+                test_fail(f'{f}: is a ZIP archive, not a safetensors file! Extract it first.')
+            else:
+                test_fail(f'{f}: invalid safetensors header (header_size={header_size})')
+            continue
+        test_pass(f'{f}: valid header ({header_size}B, {size/1024/1024:.0f}MB)')
+
+# =====================================================================
 # SUMMARY
 # =====================================================================
 print('\n' + '=' * 70)
