@@ -1,0 +1,16 @@
+{
+    "activated_loras": [
+        "Instareal_WAN_2.2.safetensors",
+        "WAN_General_NSFW_v0.08a.safetensors",
+        "Huge_Breasts_Large_Breasts_HN.safetensors",
+        "Gag_Reflex_I2V_K3NK_HN.safetensors",
+        "Consistent_Face.safetensors",
+        "Lightning_LightX2V_I2V_HN.safetensors"
+    ],
+    "loras_multipliers": "0.8 0.7 1.0 0.7 0.5 1.0",
+    "num_inference_steps": 4,
+    "guidance_phases": 2,
+    "guidance_scale": 1,
+    "alt_guidance_scale": 1,
+    "negative_prompt": "cartoon, anime, 3d render, cgi, painting, illustration, blurry, low quality, pixelated, deformed hands, extra fingers, deformed face, watermark, text, logo, fat, overweight, natural breasts, small breasts, static, frozen, morphing artifacts, flickering"
+}

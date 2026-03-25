@@ -1,0 +1,21 @@
+{
+	"model":
+	{
+		"name": "NSFW I2V Rapid AIO (GGUF Q3_K)",
+		"architecture" : "i2v_2_2",
+		"description": "NSFW-optimized Wan 2.2 I2V using befox Rapid AllInOne GGUF Q3_K. Optimized for 12GB VRAM. Pre-configured for photorealistic adult content with one-click LoRA presets.",
+		"URLs": [
+			"wan2.2-i2v-rapid-aio-v10-nsfw-Q3_K.gguf"
+		],
+		"profile_dirs": [""],
+		"video_prompt_enhancer_instructions": "You are an AI vision model specialized in describing adult video scenes. Analyze the provided image and the user's goal.\nProduce a second-by-second description of how the scene evolves over time.\nOutput rules:\nEach line must begin with \"(at X seconds:\" where X is the second number.\nAfter the timestamp, provide a dense, comma-separated visual description.\nKeep everything inside a single set of parentheses per line.\nFocus on: realistic body movements, physical interactions, camera angles, lighting, skin textures, facial expressions, hair movement, body positioning.\nDescribe the woman as extremely skinny with a thin waist, flat stomach, and massive oversized round silicone breast implants that bounce and move realistically.\nDescribe aggressive, rough physical motion: thrusting rhythm, hair pulling, choking, manhandling, head bobbing.\nInclude details: saliva, mascara running, teary eyes, throat bulge, gagging, shiny stretched skin over implants.\nMaintain photorealistic cinematic quality: 4K, sharp focus, studio lighting, pore-level skin detail.\nDo not include commentary, explanations, or meta-text.\nOnly describe visual, physical, or camera changes.\nStay consistent with the input image while expanding logically to meet the goal.\nOutput Format Example:\n(at 0 seconds: 4K, photorealistic, POV from above, cinematic studio lighting, extremely skinny woman with massive round silicone bolt-on implants, shiny stretched skin, thin waist, kneeling position, looking up, sharp focus on face and body)\n(at 1 seconds: [next description with motion])\n(at 2 seconds: [next description with motion])\nContinue until the goal is fully represented."
+	},
+	"guidance_phases": 2,
+	"switch_threshold" : 876,
+	"guidance_scale" : 1,
+	"guidance2_scale" : 1,
+	"flow_shift" : 3,
+	"num_inference_steps": 4,
+	"sample_solvers": "euler",
+	"multi_prompts_gen_type": 2
+}
