@@ -3,9 +3,11 @@
         "WAN_General_NSFW_v0.08a.safetensors",
         "Huge_Breasts_Large_Breasts_HN.safetensors",
         "Stomach_Bulge_WAN_2.2_HIGH.safetensors",
-        "Lightning_LightX2V_I2V_HN.safetensors"
+        "Lightning_LightX2V_I2V_HN.safetensors",
+        "General_NSFW_Lopi_I2V_HIGH.safetensors",
+        "Missionary_High_I2V.safetensors"
     ],
-    "loras_multipliers": "0.7 1.0 0.7 1.0",
+    "loras_multipliers": "0.7 1.0 0.7 1.0 0.7 0.7",
     "num_inference_steps": 4,
     "guidance_phases": 2,
     "guidance_scale": 1,

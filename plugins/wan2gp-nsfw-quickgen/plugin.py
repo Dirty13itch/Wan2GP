@@ -631,7 +631,7 @@ class QuickGenPlugin(WAN2GPPlugin):
                             choices=quality_choices,
                             value="draft",
                             label="Quality",
-                            info="Draft=4 steps (~30s), Standard=8 (~60s), High=12 (~2min)",
+                            info="Draft=4 steps (~6min), Standard=8 (~12min), High=12 (~18min) on RTX 3060",
                         )
 
                     with gr.Row():
@@ -857,12 +857,43 @@ class QuickGenPlugin(WAN2GPPlugin):
                     return (time.time(), gr.Tabs(), gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), gr.update())
 
                 # Apply LoRAs
-                settings["activated_loras"] = preset.get("activated_loras", [])
+                activated = list(preset.get("activated_loras", []))
+                base_weights_str = preset.get("loras_multipliers", "")
+                base_weights = base_weights_str.split()
+
+                # --- lora_skip filtering ---
+                skip_list = scene_meta.get(scene, {}).get("lora_skip", [])
+                if skip_list:
+                    filtered_loras = []
+                    filtered_weights = []
+                    for i, lora_name in enumerate(activated):
+                        if not any(skip in lora_name for skip in skip_list):
+                            filtered_loras.append(lora_name)
+                            if i < len(base_weights):
+                                filtered_weights.append(base_weights[i])
+                    activated = filtered_loras
+                    base_weights = filtered_weights
+
+                settings["activated_loras"] = activated
 
                 # Scale weights by intensity
                 mult = type_defaults.get("intensity_multipliers", {}).get(intensity, 1.0)
-                base_weights = preset.get("loras_multipliers", "")
-                settings["loras_multipliers"] = _scale_lora_weights(base_weights, mult)
+                scaled = _scale_lora_weights(" ".join(base_weights), mult).split()
+
+                # --- body_emphasis override (Huge_Breasts weight) ---
+                for i, lora_name in enumerate(activated):
+                    if "Huge_Breasts" in lora_name and i < len(scaled):
+                        scaled[i] = f"{min(max(float(body_emp), 0.2), 1.5):.2f}"
+                        break
+
+                # --- face_strength override (Consistent_Face weight) ---
+                if face_lk:
+                    for i, lora_name in enumerate(activated):
+                        if "Consistent_Face" in lora_name and i < len(scaled):
+                            scaled[i] = f"{min(max(float(face_str), 0.1), 1.2):.2f}"
+                            break
+
+                settings["loras_multipliers"] = " ".join(scaled)
 
                 # Quality settings
                 qp = type_defaults.get("quality_presets", {}).get(quality, {})
@@ -908,8 +939,31 @@ class QuickGenPlugin(WAN2GPPlugin):
                         mods, camera, gaze, hair, env, light, color, shine, male, intensity, cont_depth,
                     )
 
+                # --- DoF injection ---
+                if dof_val and float(dof_val) > 0.3:
+                    dof_strength = float(dof_val)
+                    if dof_strength > 0.7:
+                        pos += ", extremely shallow depth of field, f/1.2, strong creamy bokeh, background completely blurred"
+                    elif dof_strength > 0.4:
+                        pos += ", shallow depth of field, f/1.8, soft bokeh background"
+                    else:
+                        pos += ", slight depth of field, f/2.8, background slightly soft"
+
+                # --- Prompt enhancement prefix ---
+                if enhance_on:
+                    pos = "(Enhance this prompt: describe detailed second-by-second motion choreography, physical interactions, camera movements, and realistic body physics for this scene) " + pos
+
                 settings["prompt"] = pos
                 settings["negative_prompt"] = neg
+
+                # --- MMAudio ---
+                if audio_on:
+                    settings["MMAudio_setting"] = 1
+                    audio_prompt = scene_meta.get(scene, {}).get("auto_audio_prompt", "")
+                    if audio_prompt:
+                        settings["audio_prompt"] = audio_prompt
+                else:
+                    settings["MMAudio_setting"] = 0
 
                 # Film grain
                 if grain_on:
