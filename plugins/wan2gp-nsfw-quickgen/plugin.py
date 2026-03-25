@@ -538,7 +538,6 @@ class QuickGenPlugin(WAN2GPPlugin):
         self._type_defaults = _load_type_defaults()
         self._user_type = _load_user_type_settings()
         self._analytics = _load_analytics()
-        self._session_videos: List[dict] = []
         self._last_settings: dict = {}
         self._last_seed: Optional[int] = None
         self._lock = threading.Lock()  # Protects _analytics, _last_settings, _last_seed
@@ -1247,6 +1246,38 @@ class QuickGenPlugin(WAN2GPPlugin):
                 return depth + 1
 
             continue_btn.click(fn=prep_continue, inputs=[continuation_depth], outputs=[continuation_depth]).then(
+                fn=apply_and_generate,
+                inputs=[
+                    state, scene_dropdown, fidelity_slider, intensity_radio, quality_radio,
+                    duration_slider, aspect_radio, camera_radio, modifier_check,
+                    skin_dd, hair_color_dd, makeup_dd, aesthetic_dd,
+                    gaze_dd, hair_dd, env_dd, light_dd, color_dd, shine_dd, male_dd,
+                    body_emphasis, face_lock, face_strength,
+                    prompt_override, neg_override, prompt_enhance_toggle,
+                    audio_toggle, film_grain_toggle, dof_slider,
+                    current_seed, lock_seed_cb, continuation_depth, image_input,
+                ],
+                outputs=[
+                    self.refresh_form_trigger, self.main_tabs,
+                    current_seed, result_row, keeper_row, session_acc, diff_md, ref_preview,
+                ],
+            ).then(fn=None, inputs=[], outputs=[], js=AUTO_CLICK_GENERATE_JS)
+
+            # --- Seed variations (±1, ±2) ---
+            def seed_variation(seed_val):
+                """Increment seed by 1 for each click. User clicks multiple times to explore adjacent seeds."""
+                if seed_val is None:
+                    gr.Warning("Generate a video first to get a base seed.")
+                    return gr.update(), gr.update()
+                new_seed = int(seed_val) + 1
+                gr.Info(f"Seed variation: {int(seed_val)} → {new_seed}")
+                return new_seed, True  # Set new seed + lock it
+
+            variation_btn.click(
+                fn=seed_variation,
+                inputs=[current_seed],
+                outputs=[current_seed, lock_seed_cb],
+            ).then(
                 fn=apply_and_generate,
                 inputs=[
                     state, scene_dropdown, fidelity_slider, intensity_radio, quality_radio,
