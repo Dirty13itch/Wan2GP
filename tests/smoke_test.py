@@ -4,8 +4,11 @@ Run: python tests/smoke_test.py
 """
 import os, json, ast, sys, hashlib, glob, importlib.util, urllib.request, types
 
+# Resolve project root relative to this script (tests/ -> project root)
+PROJECT_ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+
 # Mock the WanGP internal modules so plugin can import outside server context
-sys.path.insert(0, 'C:/WAN2GP')
+sys.path.insert(0, PROJECT_ROOT)
 shared_mod = types.ModuleType('shared')
 utils_mod = types.ModuleType('shared.utils')
 plugins_mod = types.ModuleType('shared.utils.plugins')
@@ -22,9 +25,9 @@ sys.modules['shared'] = shared_mod
 sys.modules['shared.utils'] = utils_mod
 sys.modules['shared.utils.plugins'] = plugins_mod
 
-LORA_DIR = 'C:/WAN2GP/loras/wan'
-PRESETS_DIR = 'C:/WAN2GP/profiles/wan_2_2'
-PLUGIN_DIR = 'C:/WAN2GP/plugins/wan2gp-nsfw-quickgen'
+LORA_DIR = os.path.join(PROJECT_ROOT, 'loras', 'wan')
+PRESETS_DIR = os.path.join(PROJECT_ROOT, 'profiles', 'wan_2_2')
+PLUGIN_DIR = os.path.join(PROJECT_ROOT, 'plugins', 'wan2gp-nsfw-quickgen')
 
 errors = []
 warnings = []
@@ -298,8 +301,8 @@ for state, should_error in model_tests:
 # TEST 11: GGUF model + finetune config
 # =====================================================================
 print('\n[TEST 11] GGUF model + finetune config')
-gguf_v12 = 'C:/WAN2GP/ckpts/wan2.2-rapid-mega-aio-nsfw-v12.1-Q3_K.gguf'
-gguf_v10 = 'C:/WAN2GP/ckpts/wan2.2-i2v-rapid-aio-v10-nsfw-Q3_K.gguf'
+gguf_v12 = os.path.join(PROJECT_ROOT, 'ckpts', 'wan2.2-rapid-mega-aio-nsfw-v12.1-Q3_K.gguf')
+gguf_v10 = os.path.join(PROJECT_ROOT, 'ckpts', 'wan2.2-i2v-rapid-aio-v10-nsfw-Q3_K.gguf')
 found_gguf = False
 for gp, label in [(gguf_v12, 'Mega v12.1'), (gguf_v10, 'v10')]:
     if os.path.exists(gp):
@@ -312,7 +315,7 @@ for gp, label in [(gguf_v12, 'Mega v12.1'), (gguf_v10, 'v10')]:
 if not found_gguf:
     test_fail('No GGUF model found')
 
-ft_path = 'C:/WAN2GP/finetunes/nsfw_i2v_rapid.json'
+ft_path = os.path.join(PROJECT_ROOT, 'finetunes', 'nsfw_i2v_rapid.json')
 if os.path.exists(ft_path):
     with open(ft_path, 'r') as f:
         ft = json.load(f)
