@@ -343,12 +343,17 @@ def build_prompt(
 
 def _estimate_time(steps: int, frames: int, width: int, height: int) -> str:
     """Rough estimate for RTX 3060 12GB with GGUF Q3_K model.
-    Based on observed ~62s/step at 30 steps for LTX2, and ~8s/step for WAN 4-step."""
+    Calibrated from real measurement: 4 steps, 81 frames, 480x848 = 341s (5m41s).
+    First run adds ~60s for model/LoRA loading (not included here).
+    """
     pixels = width * height
-    base_per_step = 7.5  # seconds per step at 480x848 with ~81 frames on RTX 3060
+    # 341s / 4 steps = 85.25s per step at 81 frames, 480x848
+    base_per_step = 85.0
     frame_scale = frames / 81.0
     pixel_scale = pixels / (480 * 848)
     seconds = steps * base_per_step * frame_scale * pixel_scale
+    # Add ~30s overhead for LoRA loading on first gen, VAE decode
+    seconds += 30
     if seconds < 60:
         return f"~{int(seconds)}s"
     return f"~{int(seconds // 60)}m {int(seconds % 60)}s"
@@ -939,6 +944,24 @@ class QuickGenPlugin(WAN2GPPlugin):
                     image_path,
                 )
 
+            # JS to auto-click the native Generate button after tab switch
+            AUTO_CLICK_GENERATE_JS = """
+            () => {
+                setTimeout(() => {
+                    // Find the Generate button on the Video Generator tab
+                    const buttons = document.querySelectorAll('button');
+                    for (const btn of buttons) {
+                        if (btn.textContent.trim() === 'Generate' && btn.offsetParent !== null) {
+                            btn.click();
+                            console.log('[QuickGen] Auto-clicked Generate button');
+                            return;
+                        }
+                    }
+                    console.warn('[QuickGen] Generate button not found');
+                }, 500);
+            }
+            """
+
             generate_btn.click(
                 fn=apply_and_generate,
                 inputs=[
@@ -955,7 +978,7 @@ class QuickGenPlugin(WAN2GPPlugin):
                     self.refresh_form_trigger, self.main_tabs,
                     current_seed, result_row, keeper_row, session_acc, diff_md, ref_preview,
                 ],
-            )
+            ).then(fn=None, inputs=[], outputs=[], js=AUTO_CLICK_GENERATE_JS)
 
             # --- Star / Favorite ---
             def star_current(seed_val):
