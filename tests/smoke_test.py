@@ -285,6 +285,7 @@ print('\n[TEST 10] Model type validation')
 model_tests = [
     ({}, True), ({'model_type': ''}, True), ({'model_type': 'ltx2_22b'}, True),
     ({'model_type': 'nsfw_i2v_rapid'}, False), ({'model_type': 'wan_i2v_14b'}, False),
+    ({'model_type': 'nsfw_mega_v12'}, False),
 ]
 for state, should_error in model_tests:
     result = mod._check_model_type(state)
@@ -297,15 +298,19 @@ for state, should_error in model_tests:
 # TEST 11: GGUF model + finetune config
 # =====================================================================
 print('\n[TEST 11] GGUF model + finetune config')
-gguf_path = 'C:/WAN2GP/ckpts/wan2.2-i2v-rapid-aio-v10-nsfw-Q3_K.gguf'
-if os.path.exists(gguf_path):
-    size_gb = os.path.getsize(gguf_path) / (1024**3)
-    if size_gb > 5:
-        test_pass(f'GGUF model: {size_gb:.1f} GB')
-    else:
-        test_fail(f'GGUF model too small: {size_gb:.1f} GB')
-else:
-    test_fail('GGUF model not found')
+gguf_v12 = 'C:/WAN2GP/ckpts/wan2.2-rapid-mega-aio-nsfw-v12.1-Q3_K.gguf'
+gguf_v10 = 'C:/WAN2GP/ckpts/wan2.2-i2v-rapid-aio-v10-nsfw-Q3_K.gguf'
+found_gguf = False
+for gp, label in [(gguf_v12, 'Mega v12.1'), (gguf_v10, 'v10')]:
+    if os.path.exists(gp):
+        size_gb = os.path.getsize(gp) / (1024**3)
+        if size_gb > 5:
+            test_pass(f'GGUF model ({label}): {size_gb:.1f} GB')
+            found_gguf = True
+        else:
+            test_fail(f'GGUF model ({label}) too small: {size_gb:.1f} GB')
+if not found_gguf:
+    test_fail('No GGUF model found')
 
 ft_path = 'C:/WAN2GP/finetunes/nsfw_i2v_rapid.json'
 if os.path.exists(ft_path):

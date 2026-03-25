@@ -41,6 +41,8 @@ TYPE_SETTINGS_PATH = os.path.join(PLUGIN_DIR, "user_type_settings.json")
 
 EXPECTED_MODEL_TYPE = "nsfw_i2v_rapid"
 EXPECTED_MODEL_NAME = "NSFW I2V Rapid AIO (GGUF Q3_K)"
+EXPECTED_MODEL_TYPE_V12 = "nsfw_mega_v12"
+EXPECTED_MODEL_NAME_V12 = "NSFW Mega v12.1 Rapid AIO (GGUF Q3_K)"
 
 SCENE_PRESETS = {
     "Deepthroat / Facefuck": "Deepthroat Facefuck - 4 Steps.json",
@@ -458,19 +460,29 @@ def _build_summary(
 
 
 def _model_check_html() -> str:
-    """Check if the GGUF model file exists and return appropriate HTML banner."""
-    gguf_path = os.path.join(PLUGIN_DIR, "..", "..", "ckpts", "wan2.2-i2v-rapid-aio-v10-nsfw-Q3_K.gguf")
-    if os.path.exists(gguf_path):
+    """Check if a GGUF model file exists and return appropriate HTML banner."""
+    ckpts = os.path.join(PLUGIN_DIR, "..", "..", "ckpts")
+    v12_path = os.path.join(ckpts, "wan2.2-rapid-mega-aio-nsfw-v12.1-Q3_K.gguf")
+    v10_path = os.path.join(ckpts, "wan2.2-i2v-rapid-aio-v10-nsfw-Q3_K.gguf")
+    if os.path.exists(v12_path):
         return (
             '<div style="padding:8px 12px;background:#1a3a1a;border:1px solid #2d5a2d;border-radius:6px;margin:4px 0;font-size:0.85em">'
-            '<b style="color:#4ade80">Model ready.</b> '
-            f'Select <b>"{EXPECTED_MODEL_NAME}"</b> from the Video Generator tab\'s model dropdown, then return here to generate.'
+            f'<b style="color:#4ade80">Mega v12.1 ready.</b> '
+            f'Select <b>"{EXPECTED_MODEL_NAME_V12}"</b> from Video Generator dropdown.'
+            '</div>'
+        )
+    if os.path.exists(v10_path):
+        return (
+            '<div style="padding:8px 12px;background:#1a3a1a;border:1px solid #2d5a2d;border-radius:6px;margin:4px 0;font-size:0.85em">'
+            f'<b style="color:#4ade80">Model ready (v10).</b> '
+            f'Select <b>"{EXPECTED_MODEL_NAME}"</b> from Video Generator dropdown. '
+            '<span style="color:#facc15">Upgrade to Mega v12.1 recommended.</span>'
             '</div>'
         )
     return (
         '<div style="padding:8px 12px;background:#3a1a1a;border:1px solid #5a2d2d;border-radius:6px;margin:4px 0;font-size:0.85em">'
         '<b style="color:#ef4444">GGUF model not found!</b> '
-        'Download <code>wan2.2-i2v-rapid-aio-v10-nsfw-Q3_K.gguf</code> to the <code>ckpts/</code> folder.'
+        'Download a Rapid AIO NSFW GGUF to the <code>ckpts/</code> folder.'
         '</div>'
     )
 
@@ -479,17 +491,18 @@ def _check_model_type(state: dict) -> str:
     """Check if the currently loaded model is the expected WAN 2.2 I2V model. Returns error string or empty."""
     model_type = state.get("model_type", "")
     if not model_type:
-        return f"No model selected. Go to Video Generator tab and select '{EXPECTED_MODEL_NAME}' from the model dropdown."
-    # Accept any wan i2v model (the finetune or the stock one)
-    if "i2v" in model_type.lower() and ("wan" in model_type.lower() or "2_2" in model_type or "nsfw" in model_type.lower()):
+        return f"No model selected. Go to Video Generator tab and select '{EXPECTED_MODEL_NAME_V12}' or '{EXPECTED_MODEL_NAME}' from the model dropdown."
+    # Accept exact finetune matches
+    if model_type in (EXPECTED_MODEL_TYPE, EXPECTED_MODEL_TYPE_V12):
         return ""
-    # Check for exact finetune match
-    if model_type == EXPECTED_MODEL_TYPE:
+    # Accept any wan i2v model (stock or custom finetune)
+    mt = model_type.lower()
+    if ("i2v" in mt or "mega" in mt) and ("wan" in mt or "2_2" in mt or "nsfw" in mt):
         return ""
     return (
         f"Wrong model loaded: '{model_type}'. "
         f"Quick Gen needs a WAN 2.2 I2V model. "
-        f"Go to Video Generator tab and select '{EXPECTED_MODEL_NAME}' from the dropdown."
+        f"Go to Video Generator tab and select '{EXPECTED_MODEL_NAME_V12}' from the dropdown."
     )
 
 
