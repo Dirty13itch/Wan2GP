@@ -984,6 +984,17 @@ class QuickGenPlugin(WAN2GPPlugin):
                 # Record analytics
                 _record_generation(self._analytics, scene, settings["seed"], False, 0)
 
+                # Debug: log applied settings
+                print(f"[QuickGen] === Generation Settings ===")
+                print(f"[QuickGen]   Scene: {scene}")
+                print(f"[QuickGen]   LoRAs ({len(activated)}): {', '.join(l[:30] for l in activated)}")
+                print(f"[QuickGen]   Weights: {settings['loras_multipliers']}")
+                print(f"[QuickGen]   Steps: {qp.get('num_inference_steps', 4)} | Res: {ar['width']}x{ar['height']} | Frames: {duration_frames}")
+                print(f"[QuickGen]   Fidelity: {fidelity} | Seed: {settings['seed']} | Audio: {audio_on} | Grain: {grain_on}")
+                print(f"[QuickGen]   Prompt ({len(pos)} chars): {pos[:100]}...")
+                print(f"[QuickGen]   Neg ({len(neg)} chars): {neg[:80]}...")
+                print(f"[QuickGen] ==============================")
+
                 gr.Info(f"Generating: {scene} | Seed: {settings['seed']} | {ar['width']}x{ar['height']} | {qp.get('num_inference_steps', 4)} steps")
 
                 # Switch to Video Generator to run generation
@@ -1001,18 +1012,29 @@ class QuickGenPlugin(WAN2GPPlugin):
             # JS to auto-click the native Generate button after tab switch
             AUTO_CLICK_GENERATE_JS = """
             () => {
-                setTimeout(() => {
-                    // Find the Generate button on the Video Generator tab
-                    const buttons = document.querySelectorAll('button');
+                let attempts = 0;
+                const tryClick = () => {
+                    attempts++;
+                    // Scope to the first tabpanel (Video Generator)
+                    const panels = document.querySelectorAll('[role="tabpanel"]');
+                    const videoGenPanel = panels.length > 0 ? panels[0] : document;
+                    const buttons = videoGenPanel.querySelectorAll('button');
                     for (const btn of buttons) {
-                        if (btn.textContent.trim() === 'Generate' && btn.offsetParent !== null) {
+                        const txt = btn.textContent.trim();
+                        if (txt === 'Generate' && btn.offsetParent !== null) {
                             btn.click();
-                            console.log('[QuickGen] Auto-clicked Generate button');
+                            console.log('[QuickGen] Auto-clicked Generate (attempt ' + attempts + ')');
                             return;
                         }
                     }
-                    console.warn('[QuickGen] Generate button not found');
-                }, 500);
+                    if (attempts < 4) {
+                        console.log('[QuickGen] Generate button not found, retry ' + attempts + '/4...');
+                        setTimeout(tryClick, 500);
+                    } else {
+                        console.error('[QuickGen] Generate button not found after 4 attempts');
+                    }
+                };
+                setTimeout(tryClick, 800);
             }
             """
 
@@ -1065,7 +1087,7 @@ class QuickGenPlugin(WAN2GPPlugin):
                     self.refresh_form_trigger, self.main_tabs,
                     current_seed, result_row, keeper_row, session_acc, diff_md, ref_preview,
                 ],
-            )
+            ).then(fn=None, inputs=[], outputs=[], js=AUTO_CLICK_GENERATE_JS)
 
             # --- Redo (higher quality) ---
             def bump_quality(current_q):
@@ -1089,7 +1111,7 @@ class QuickGenPlugin(WAN2GPPlugin):
                     self.refresh_form_trigger, self.main_tabs,
                     current_seed, result_row, keeper_row, session_acc, diff_md, ref_preview,
                 ],
-            )
+            ).then(fn=None, inputs=[], outputs=[], js=AUTO_CLICK_GENERATE_JS)
 
             # --- Continue video ---
             def prep_continue(depth):
@@ -1111,7 +1133,7 @@ class QuickGenPlugin(WAN2GPPlugin):
                     self.refresh_form_trigger, self.main_tabs,
                     current_seed, result_row, keeper_row, session_acc, diff_md, ref_preview,
                 ],
-            )
+            ).then(fn=None, inputs=[], outputs=[], js=AUTO_CLICK_GENERATE_JS)
 
             # --- Same woman, different scene ---
             def reset_for_new_scene(depth):
