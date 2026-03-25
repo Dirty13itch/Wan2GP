@@ -2,8 +2,9 @@
 	"model":
 	{
 		"name": "NSFW Mega v12.1 Rapid AIO (GGUF Q3_K)",
-		"architecture" : "i2v_2_2",
-		"description": "NSFW Mega v12.1 — bf16 base, rCM + LightX2V motion, refined NSFW. Combined I2V+T2V+VACE. 8.0GB GGUF Q3_K, optimized for 12GB VRAM.",
+		"architecture" : "vace_14B_2_2",
+		"modules": ["vace_14B"],
+		"description": "NSFW Mega v12.1 — bf16 base, rCM + LightX2V motion, refined NSFW. Combined I2V+T2V+VACE. 8.0GB GGUF Q3_K, optimized for 12GB VRAM. Use Start Video with Image mode for I2V.",
 		"URLs": [
 			"wan2.2-rapid-mega-aio-nsfw-v12.1-Q3_K.gguf"
 		],
