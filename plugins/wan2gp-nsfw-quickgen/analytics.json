@@ -5,10 +5,16 @@
             "starred_count": 0,
             "best_seeds": [],
             "avg_generation_time": 0
+        },
+        "Rough Cowgirl": {
+            "total_generations": 1,
+            "starred_count": 0,
+            "best_seeds": [],
+            "avg_generation_time": 0
         }
     },
     "global_stats": {
-        "total_generations": 6,
+        "total_generations": 7,
         "total_starred": 0
     }
 }
