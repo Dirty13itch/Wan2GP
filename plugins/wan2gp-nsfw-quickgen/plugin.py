@@ -365,7 +365,16 @@ def build_prompt(
         if idx >= 0 and idx < len(esc):
             parts.append(esc[idx])
 
-    positive = ", ".join(p for p in parts if p.strip())
+    # Deduplicate: split all parts into phrases, remove exact duplicates while preserving order
+    all_phrases = []
+    seen = set()
+    for part in parts:
+        for phrase in [p.strip() for p in part.split(",") if p.strip()]:
+            key = phrase.lower()
+            if key not in seen:
+                seen.add(key)
+                all_phrases.append(phrase)
+    positive = ", ".join(all_phrases)
 
     # --- Negative prompt ---
     neg_parts = [type_defaults.get("base_negative", "")]
@@ -523,6 +532,22 @@ class QuickGenPlugin(WAN2GPPlugin):
         )
 
         self.add_custom_js(KEYBOARD_SHORTCUTS_JS)
+
+        # Register metadata hook to tag outputs with Quick Gen info
+        try:
+            self.register_data_hook('before_metadata_save', self._tag_output_metadata)
+        except Exception:
+            pass  # Hook may not be available in all WanGP versions
+
+    def _tag_output_metadata(self, configs, **kwargs):
+        """Tag saved video metadata with Quick Gen scene info."""
+        if hasattr(self, '_last_settings') and self._last_settings:
+            configs["quickgen_scene"] = self._last_settings.get("scene", "")
+            configs["quickgen_modifiers"] = self._last_settings.get("modifiers", [])
+            configs["quickgen_intensity"] = self._last_settings.get("intensity", "")
+            configs["quickgen_fidelity"] = self._last_settings.get("fidelity", 0)
+            configs["quickgen_seed"] = self._last_settings.get("seed", 0)
+        return configs
 
     def on_tab_select(self, state: dict):
         return []
@@ -730,7 +755,7 @@ class QuickGenPlugin(WAN2GPPlugin):
                     face_lock = gr.Checkbox(value=True, label="Face Consistency Lock")
                     face_strength = gr.Slider(minimum=0.2, maximum=1.0, value=0.7, step=0.05, label="Face Lock Strength")
                     audio_toggle = gr.Checkbox(value=False, label="Generate Audio (MMAudio)")
-                    film_grain_toggle = gr.Checkbox(value=False, label="Film Grain")
+                    film_grain_toggle = gr.Checkbox(value=True, label="Film Grain (subtle, adds realism)")
 
             with gr.Accordion("Prompt Override (editable)", open=False, visible=True) as prompt_acc:
                 prompt_override = gr.Textbox(label="Positive Prompt (auto-filled, edit to override)", lines=4, value="")
@@ -985,8 +1010,14 @@ class QuickGenPlugin(WAN2GPPlugin):
                 else:
                     settings["seed"] = random.randint(1, 999999999)
 
-                # Image
+                # Image + continuation mode
                 settings["image_start"] = image_path
+                if cont_depth > 0:
+                    # Continue Last Video mode — picks up the last generated output
+                    settings["image_prompt_type"] = "L"
+                else:
+                    # Standard I2V mode
+                    settings["image_prompt_type"] = "S"
 
                 # Prompt
                 user_t = {"skin_tone": skin, "hair_color": hair_c, "makeup_style": makeup, "aesthetic": aes}
@@ -1031,13 +1062,20 @@ class QuickGenPlugin(WAN2GPPlugin):
                 else:
                     settings["MMAudio_setting"] = 0
 
-                # Film grain
+                # Film grain — default ON at subtle level for realism
                 if grain_on:
-                    settings["film_grain_intensity"] = 0.15
-                    settings["film_grain_saturation"] = 0.3
+                    settings["film_grain_intensity"] = 0.12
+                    settings["film_grain_saturation"] = 0.25
                 else:
                     settings["film_grain_intensity"] = 0
                     settings["film_grain_saturation"] = 0
+
+                # RIFE frame interpolation — 2x by default for smoother motion
+                # quality "high" gets 4x interpolation for maximum smoothness
+                if quality == "high":
+                    settings["rife_passes"] = "rife4"
+                elif quality != "draft":
+                    settings["rife_passes"] = "rife2"
 
                 # Save last seed
                 self._last_seed = settings["seed"]

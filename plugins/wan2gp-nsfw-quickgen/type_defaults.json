@@ -1,6 +1,6 @@
 {
-    "body_prompt": "extremely underweight, dangerously thin, anorexic body type, visible rib cage, protruding hip bones, concave stomach, thigh gap, skeletal frame, rigid spherical silicone breast implants, bolt-on, gravity-defying, implant edges visible under stretched taut skin, breasts maintain round shape in all positions, minimal natural bounce, implants move as rigid unit with torso, visible implant contour, skin stretched thin over implant",
-    "body_negative": "average body, normal weight, thick, curvy, voluptuous, healthy weight, medium build, athletic build, muscular, chubby, fat, natural breasts, saggy, droopy, soft breasts, pendulous, teardrop shape, natural bounce, deflating breasts, flattening chest, breast shape change, implant deformation",
+    "body_prompt": "extremely skinny, visible ribs, flat stomach, thigh gap, massive rigid bolt-on silicone implants, gravity-defying round shape, stretched shiny skin",
+    "body_negative": "average body, thick, curvy, voluptuous, muscular, chubby, natural breasts, saggy, droopy, soft bounce, teardrop shape",
     "skin_tone": {
         "fair": "fair pale skin",
         "tan": "tanned golden skin",
@@ -13,65 +13,65 @@
         "red": "red hair, ginger"
     },
     "makeup_style": {
-        "pornstar_glam": "heavy glamorous makeup, thick false eyelashes, dramatic eye shadow, glossy lip gloss, long acrylic nails, fake tan lines",
-        "natural": "minimal natural makeup, clean face",
-        "messy": "smeared makeup, running mascara, messy lipstick, disheveled"
+        "pornstar_glam": "heavy glam makeup, false lashes, glossy lips, acrylic nails",
+        "natural": "minimal natural makeup",
+        "messy": "smeared makeup, running mascara, disheveled"
     },
     "aesthetic_presets": {
-        "pornstar": "professional adult performer look, heavy glamorous makeup, thick false eyelashes, long acrylic nails, glossy lip gloss, perfectly styled",
-        "natural": "natural beauty, minimal makeup, clean skin, no artificial enhancements to face",
-        "instagram": "instagram model aesthetic, ring light catchlights in eyes, contouring makeup, subtle glam, social media ready"
+        "pornstar": "professional adult performer aesthetic",
+        "natural": "natural beauty, clean skin",
+        "instagram": "instagram model aesthetic, ring light catchlights"
     },
     "gaze_prompts": {
-        "camera": "direct eye contact with camera, looking straight at viewer",
-        "looking_up": "looking up submissively, eyes angled upward",
-        "eyes_closed": "eyes closed tightly, expression of intensity",
-        "eyes_rolling": "eyes rolling back, overwhelmed expression",
-        "away": "looking away, detached expression"
+        "camera": "direct eye contact with camera",
+        "looking_up": "looking up submissively",
+        "eyes_closed": "eyes closed tightly",
+        "eyes_rolling": "eyes rolling back",
+        "away": "looking away"
     },
     "hair_state_prompts": {
-        "loose": "hair loose and flowing naturally",
-        "ponytail": "hair pulled back in tight ponytail",
-        "gripped": "hair gripped tightly in fist, hair pulling",
-        "messy": "hair messy and disheveled, wild unkempt hair"
+        "loose": "hair flowing",
+        "ponytail": "hair in ponytail",
+        "gripped": "hair gripped in fist, pulling",
+        "messy": "messy disheveled hair"
     },
     "camera_prompts": {
-        "pov_above": "POV camera angle from above, looking down at subject",
-        "side": "side profile camera angle, lateral view",
-        "pov_below": "POV camera angle from below, looking up at subject",
-        "static_wide": "static wide shot, full scene visible, fixed camera",
-        "slow_pan": "slow cinematic camera pan, gradual movement across scene"
+        "pov_above": "POV from above",
+        "side": "side profile angle",
+        "pov_below": "POV from below, looking up",
+        "static_wide": "wide shot, full scene visible",
+        "slow_pan": "slow cinematic camera pan"
     },
     "environment_prompts": {
-        "studio": "professional photography studio, clean backdrop, controlled lighting",
-        "bedroom": "bedroom setting, bed visible, domestic interior",
-        "bathroom": "bathroom setting, tiles, wet environment, shower",
-        "hotel": "upscale hotel room, modern interior, neutral decor",
-        "dark": "dark moody environment, minimal background, dramatic shadows",
-        "none": "shallow depth of field, completely blurred background, bokeh, subject isolated"
+        "studio": "studio backdrop",
+        "bedroom": "bedroom setting",
+        "bathroom": "bathroom, wet tiles",
+        "hotel": "hotel room",
+        "dark": "dark moody background",
+        "none": "blurred background, bokeh"
     },
     "lighting_prompts": {
-        "studio": "bright even studio lighting, professional, flattering soft light",
-        "dramatic": "dramatic side lighting, harsh shadows, high contrast, chiaroscuro",
-        "ring_light": "ring light illumination, even front lighting, catchlights in eyes, social media aesthetic",
-        "natural": "soft natural window light, golden warm tones, diffused daylight",
-        "low_key": "low-key dark lighting, only subject illuminated, intimate mood, dark surroundings"
+        "studio": "bright studio lighting",
+        "dramatic": "dramatic side lighting, harsh shadows",
+        "ring_light": "ring light, even front lighting",
+        "natural": "soft natural window light",
+        "low_key": "low-key dark lighting, only subject lit"
     },
     "color_temp_prompts": {
-        "warm": "warm amber golden color temperature, warm tones",
-        "neutral": "neutral white balance, accurate colors",
-        "cool": "cool blue color temperature, clinical cool tones"
+        "warm": "warm amber tones",
+        "neutral": "neutral colors",
+        "cool": "cool blue tones"
     },
     "shine_prompts": {
-        "matte": "matte skin, no shine, powder finish",
-        "natural": "natural skin sheen, slight highlights on curves",
-        "glossy": "oily glistening skin, highlights on curves, shiny taut skin over implants, wet look",
-        "drenched": "dripping in oil, extremely wet and shiny, reflections on entire skin surface, glistening"
+        "matte": "matte skin",
+        "natural": "natural skin sheen",
+        "glossy": "oily glistening skin, shiny",
+        "drenched": "dripping in oil, extremely wet and shiny"
     },
     "male_visibility_prompts": {
-        "pov_hands": "POV shot, only male hands visible gripping, first person perspective",
-        "pov_minimal": "POV shot, male hands and forearms visible, no male face",
-        "third_person": "third person camera angle, both participants visible"
+        "pov_hands": "POV, only male hands visible",
+        "pov_minimal": "POV, male hands and forearms visible",
+        "third_person": "third person angle, both participants visible"
     },
     "intensity_multipliers": {
         "gentle": 0.7,
@@ -88,27 +88,27 @@
         "portrait": {"width": 480, "height": 848, "label": "Portrait (9:16)"},
         "square": {"width": 640, "height": 640, "label": "Square (1:1)"}
     },
-    "base_negative": "cartoon, anime, 3d render, cgi, painting, illustration, blurry, low quality, pixelated, watermark, text, logo, morphing artifacts, flickering, deformed fingers, extra fingers, missing fingers, mutated hands, fused fingers, three hands, extra hands, extra person, duplicate woman, multiple women, extra limbs, skin color mismatch, stretching body, elongated limbs, rubber limbs, distorted proportions, neck stretching, arm elongation, floating, hovering, gap between bodies, no physical contact, weightless, changing appearance, inconsistent details, morphing accessories",
-    "quality_prompt": "photorealistic 8K UHD, cinematic, sharp focus, pore-level skin detail, natural skin texture, skin imperfections, subsurface scattering, micro-wrinkles, hyperrealistic",
-    "physical_contact_prompt": "bodies physically pressed together, skin contact visible, weight and pressure on contact points",
+    "base_negative": "cartoon, anime, 3d render, cgi, painting, blurry, low quality, watermark, text, deformed hands, extra fingers, extra hands, extra person, duplicate woman, extra limbs, morphing artifacts, flickering, stretching body, elongated limbs, floating, hovering",
+    "quality_prompt": "photorealistic, cinematic, sharp focus, skin pore detail, natural skin texture",
+    "physical_contact_prompt": "bodies pressed together, physical contact visible",
     "modifier_chips": {
-        "oily": {"prompt": "oily glistening skin, oil highlights", "category": "skin"},
-        "sweaty": {"prompt": "glistening sweat on skin, perspiration", "category": "skin"},
-        "wet": {"prompt": "wet skin, water droplets on body", "category": "skin"},
-        "saliva": {"prompt": "saliva strings, drool, wet messy mouth", "category": "mess"},
-        "mascara_running": {"prompt": "mascara running down cheeks, smeared eye makeup from tears", "category": "mess"},
-        "tears": {"prompt": "tears streaming down face, watery eyes, crying", "category": "mess"},
-        "smeared_lipstick": {"prompt": "smeared lipstick, messy lip color spread around mouth", "category": "mess"},
-        "throat_bulge": {"prompt": "visible throat bulge from deep insertion, neck distension", "category": "detail"},
-        "veins_visible": {"prompt": "visible veins under stretched skin on breasts, blue veins", "category": "detail"},
-        "skin_stretching": {"prompt": "skin visibly stretching and taut, implant outline visible through skin", "category": "detail"},
-        "jiggle": {"prompt": "realistic rigid implant jiggle on impact, bounce as solid unit", "category": "detail"},
-        "eye_contact": {"prompt": "intense direct eye contact with camera, piercing gaze at viewer", "category": "expression"},
-        "ahegao": {"prompt": "ahegao expression, tongue out, eyes rolling back, overwhelmed face", "category": "expression"},
-        "gagging_expression": {"prompt": "gagging expression, retching face, struggling, red face", "category": "expression"},
-        "slow_motion": {"prompt": "slow motion cinematic movement, 120fps slow-mo look", "category": "style"},
-        "film_grain": {"prompt": "subtle 35mm film grain texture, analog film look", "category": "style"},
-        "shallow_dof": {"prompt": "f/1.4 shallow depth of field, creamy bokeh background, subject in razor sharp focus", "category": "style"}
+        "oily": {"prompt": "oily glistening skin", "category": "skin"},
+        "sweaty": {"prompt": "sweaty glistening skin", "category": "skin"},
+        "wet": {"prompt": "wet skin, water droplets", "category": "skin"},
+        "saliva": {"prompt": "saliva strings, drool", "category": "mess"},
+        "mascara_running": {"prompt": "mascara running, smeared makeup", "category": "mess"},
+        "tears": {"prompt": "tears streaming, watery eyes", "category": "mess"},
+        "smeared_lipstick": {"prompt": "smeared lipstick", "category": "mess"},
+        "throat_bulge": {"prompt": "visible throat bulge", "category": "detail"},
+        "veins_visible": {"prompt": "veins visible under skin", "category": "detail"},
+        "skin_stretching": {"prompt": "skin stretched taut over implants", "category": "detail"},
+        "jiggle": {"prompt": "rigid implant jiggle on impact", "category": "detail"},
+        "eye_contact": {"prompt": "intense eye contact with camera", "category": "expression"},
+        "ahegao": {"prompt": "ahegao, tongue out, eyes rolling", "category": "expression"},
+        "gagging_expression": {"prompt": "gagging expression, red face", "category": "expression"},
+        "slow_motion": {"prompt": "slow motion", "category": "style"},
+        "film_grain": {"prompt": "35mm film grain", "category": "style"},
+        "shallow_dof": {"prompt": "shallow depth of field, bokeh", "category": "style"}
     },
     "mess_escalation": [
         "clean makeup, dry skin, composed expression",
